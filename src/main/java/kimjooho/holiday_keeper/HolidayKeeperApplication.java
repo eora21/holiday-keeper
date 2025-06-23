@@ -1,4 +1,4 @@
-package eora21.holiday_keeper;
+package kimjooho.holiday_keeper;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
