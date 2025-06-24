@@ -49,7 +49,7 @@ erDiagram
         VARCHAR(100) name
     }
 
-    countries || .. o{ holidays: country_code
+    countries || .. |{ holidays: country_code
 
     holidays {
         BIGINT holiday_id PK
@@ -113,7 +113,9 @@ H2 I/O 블로킹을 막기 위해서는 R2DBC를 설정해야 했습니다.
 
 외부 api 호출만 비동기로, 이후 DB 저장 과정은 JPA를 통한 블로킹으로 구성하는 방법이 현실성도 있으면서 구현 가능할 것이라 판단되었습니다.
 
-그러나 이 역시 로직의 복잡성과 코드 가독성이 우려되었고, '데드라인 내에 완성하는 게 0순위'라는 판단에 의거하여 Webflux를 사용하지 않는 것으로 결정하였습니다.
+그러나 이 역시 Webflux에 의한 로직의 복잡성과 코드 가독성이 우려되었고, '데드라인 내에 완성하는 게 0순위'라는 판단에 의거하여 Webflux를 사용하지 않는 것으로 결정하였습니다.
+
+대신 아이디어를 실현화하기 위해 parallelStream과 CompletableFuture로 병렬 작업 및 비동기 작업을 구성하여 시간을 최소한으로 줄일 수 있도록 했습니다.
 
 ## 외부 데이터 획득은 반복되어야 한다
 
@@ -139,14 +141,42 @@ H2 I/O 블로킹을 막기 위해서는 R2DBC를 설정해야 했습니다.
 
 이에 [공식문서](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html)를 참조하여 RestClient를 사용하였습니다.
 
+## 넓은 트랜잭션 + 병렬 작업 시 발생한 문제들
+
+Fetcher를 통해 하나의 트랜잭션을 걸고, 여러 api 호출을 CompletableFuture를 통해 비동기로 동작시킨 후 저장하니 10초가 걸렸습니다.
+
+시간을 줄이기 위해 ParallelStream을 통해 병렬 처리를 시도했더니 Country code가 null이라는 예외가 발생했습니다.
+
+code 자체를 넘겨서 getReferenceById를 적용해봐도 'DB에 없는 code'라는 예외가 발생했습니다.
+
+병렬 코드는 살리되 최상위 트랜잭션을 제거하여 save, saveAll 동작 시에만 트랜잭션을 동작하게 구성했더니 문제가 사라졌으며 5초가 걸렸습니다.
+
+시간도 줄고, 문제가 사라졌지만 적절한 해결책은 아니었습니다. '기존에 왜 문제가 발생했는지 이유를 모르기 때문'입니다.
+
+우선적으로 CompletableFuture에 대한 이해도가 낮은 상태라는 것을 인지했고, 쉬는 시간마다 '모던 자바 인 액션'을 읽으며 CompletableFuture를 학습하고 있습니다.
+
+모든 체크포인트를 달성한 후, `NagerFetcher`에서 발생했던 문제를 완벽하게 이해하고 리팩토링해보는 것을 목표로 삼았습니다.
+
+## 복합키 Entity 저장 시 Select 쿼리 발생시키지 않게 만들기
+
+복합키를 사용하는 경우, JPA 특성 상 isNew를 확인하기 위해 Select 쿼리가 발생합니다.
+
+데이터를 넣을 때는 isNew가 항상 false이기 때문에, 이를 확인할 필요가 없습니다.
+
+따라서 isNew를 판단할 기준을 세우고, Select 쿼리 발생을 없애 더 나은 성능을 끌어내보기로 했습니다.
+
 # 체크리스트
 
 - [ ] 기능 명세
   - [ ] 데이터 적재
-    - [ ] 최초 실행 시 외부 API 통해 N개 국가에 대한 최근 5년(2020 ~ 2025)의 공휴일을 수집 및 일괄 적재
+    - [x] 최초 실행 시 외부 API 통해 N개 국가에 대한 최근 5년(2020 ~ 2025)의 공휴일을 수집 및 일괄 적재
       - [x] N개 국가 저장
-      - [ ] 행정 구역 저장
-      - [ ] 공휴일 저장
+      - [x] 행정 구역 저장
+      - [x] 공휴일 저장
+    - [ ] 리팩토링 목표
+      - [ ] CompletableFuture와 parallelStream을 같이 사용했을 때 문제가 발생한 이유 찾기
+      - [ ] CompletableFuture 사용 부분을 가독성있게 구성하기
+      - [ ] 복합키를 지닌 Entity 저장 시 Select 쿼리 발생하지 않도록 하기
   - [ ] 검색
     - [ ] 연도별/국가별 필터 기반 공휴일 조회
     - [ ] 필터 자유 확장
