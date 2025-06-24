@@ -38,4 +38,11 @@ public class Holiday {
 
     @Column
     private String localName;
+
+    public Holiday(Country country, LocalDate date, String name, String localName) {
+        this.country = country;
+        this.date = date;
+        this.name = name;
+        this.localName = localName;
+    }
 }

@@ -4,11 +4,10 @@ import java.time.LocalDate;
 import java.util.List;
 import kimjooho.holiday_keeper.type.Type;
 
-public record NagerHolidaysResponse(
+record NagerHolidayResponse(
         LocalDate date,
         String name,
         String localName,
-        String countryCode,
         List<String> counties,
         List<Type> types
         ) {
