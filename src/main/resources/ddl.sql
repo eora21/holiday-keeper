@@ -15,8 +15,8 @@ CREATE TABLE `holidays`
 (
     `holiday_id`   BIGINT AUTO_INCREMENT PRIMARY KEY,
     `date`         DATE         NOT NULL,
-    `name`         VARCHAR(100) NOT NULL,
-    `local_name`   VARCHAR(100) NOT NULL,
+    `name`         VARCHAR(200) NOT NULL,
+    `local_name`   VARCHAR(200) NOT NULL,
     `country_code` VARCHAR(2)   NOT NULL,
 
     FOREIGN KEY (`country_code`) REFERENCES countries (`country_code`),
