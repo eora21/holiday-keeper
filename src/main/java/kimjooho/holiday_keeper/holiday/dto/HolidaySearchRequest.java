@@ -91,16 +91,32 @@ public class HolidaySearchRequest {
     }
 
     public LocalDate getFrom() {
-        return PlatLocalDateFormatterUtil.parse(from);
+        if (Objects.nonNull(from)) {
+            return PlatLocalDateFormatterUtil.parse(from);
+        }
+
+        if (Objects.nonNull(year)) {
+            return PlatLocalDateFormatterUtil.parse(year + "0101");
+        }
+
+        return null;
     }
 
     public LocalDate getTo() {
-        LocalDate parse = PlatLocalDateFormatterUtil.parse(to);
+        if (Objects.nonNull(to)) {
+            LocalDate parse = PlatLocalDateFormatterUtil.parse(to);
 
-        if (skipDayFlagForTo) {
-            return parse.with(TemporalAdjusters.lastDayOfMonth());
+            if (skipDayFlagForTo) {
+                return parse.with(TemporalAdjusters.lastDayOfMonth());
+            }
+
+            return parse;
         }
 
-        return parse;
+        if (Objects.nonNull(year)) {
+            return PlatLocalDateFormatterUtil.parse(year + "1231");
+        }
+
+        return null;
     }
 }
