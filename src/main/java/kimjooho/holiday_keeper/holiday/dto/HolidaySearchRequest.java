@@ -47,7 +47,7 @@ public class HolidaySearchRequest {
     }
 
     private static boolean isSkipDay(String to) {
-        return Objects.nonNull(to) && to.length() == 2;
+        return Objects.nonNull(to) && to.length() <= 2;
     }
 
     private static Integer convertYear(Integer year) {
