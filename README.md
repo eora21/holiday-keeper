@@ -6,6 +6,12 @@
 
 # Swagger UI 또는 OpenAPI JSON 노출 확인 방법
 
+> swagger 설정은 [이전에 작성한 swagger 설정글](https://velog.io/@eora21/restdocs-swaggerUI-설정하기)을 토대로 구성하였습니다.
+
+build를 수행하면 `src/main/resources/static/docs` 경로에 swagger 파일이 생성됩니다.
+
+스프링이 실행된 상태에서 확인하시려면 http://localhost:8080/docs/index.html 주소로 접속하시면 됩니다.
+
 # 구현 과정 및 고민
 
 ## 외부 API 살펴보기
@@ -165,6 +171,26 @@ code 자체를 넘겨서 getReferenceById를 적용해봐도 'DB에 없는 code'
 
 따라서 isNew를 판단할 기준을 세우고, Select 쿼리 발생을 없애 더 나은 성능을 끌어내보기로 했습니다.
 
+## from, to 날짜를 더 쉽게 받고 싶은데.. + 예외 발생 시 BindException으로 구성할 수는 없나?
+
+필터를 위한 사용자의 입력을 좀 더 손쉽게 입력받고 싶었습니다.
+
+예를 들어 year를 25라고만 입력해도 2025가 되고, year가 입력된 경우에는 from과 to에 월만 입력해도 잘 동작되게 만들고 싶었습니다.
+
+만약 year가 존재하는 경우, from 혹은 to에 10만 입력해도 2025년 10월을 뜻하도록 구성하고 싶었습니다.
+
+거기에 더해 from이라면 시작일인 2025-10-01을, to라면 종료일인 2025-10-31로 자동 완성되게끔 구현하고자 했습니다.
+
+따라서 Request를 받는 dto에 String -> LocalDate 변경 로직을 잔뜩 입력했습니다. 그러나 제가 미처 잡지 못한 예외가 발생하는 경우, 서버는 500 에러를 발생시켰습니다.
+
+`DateTimeParseException`을 잡아 예외 핸들링을 하고 싶었으나, 다른 BindException과 합쳐지지 않는 문제가 있었습니다.
+
+물론 컨트롤러에서 `bindingResult`를 추가하고 에러를 입력하면 해결되는 문제였으나, '컨트롤러 메서드 가독성이 떨어진다'는 생각이 들었습니다.
+
+이에 Validator 어노테이션을 만들고, dto의 완성된 String을 검증하도록 구성했습니다.
+
+Validator는 LocalDate로 변경이 가능한지 확인하고, 불가능한 경우 false를 반환하여 BindException에 모든 정보가 담기게끔 구성했습니다.
+
 # 체크리스트
 
 - [ ] 기능 명세
@@ -177,6 +203,7 @@ code 자체를 넘겨서 getReferenceById를 적용해봐도 'DB에 없는 code'
       - [ ] CompletableFuture와 parallelStream을 같이 사용했을 때 문제가 발생한 이유 찾기
       - [ ] CompletableFuture 사용 부분을 가독성있게 구성하기
       - [ ] 복합키를 지닌 Entity 저장 시 Select 쿼리 발생하지 않도록 하기
+      - [ ] 효율적인 batch가 가능하도록 saveAll 구간들을 나누기
   - [ ] 검색
     - [ ] 연도별/국가별 필터 기반 공휴일 조회
     - [ ] 필터 자유 확장
@@ -193,4 +220,4 @@ code 자체를 넘겨서 getReferenceById를 적용해봐도 'DB에 없는 code'
   - [ ] 빌드 & 실행 방법
   - [ ] 설계한 REST API 명세 요약(엔드포인트, 파라미터, 응답 예시)
   - [ ] ./gradlew clean test 성공 스크린샷 (테스트 작성 시)
-  - [ ] Swagger UI 또는 OpenAPI JSON 노출 확인 방법
+  - [x] Swagger UI 또는 OpenAPI JSON 노출 확인 방법
