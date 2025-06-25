@@ -1,0 +1,198 @@
+package kimjooho.holiday_keeper.holiday.controller;
+
+import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static com.epages.restdocs.apispec.Schema.schema;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.epages.restdocs.apispec.ParameterDescriptorWithType;
+import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.SimpleType;
+import kimjooho.holiday_keeper.ControllerTestSupport;
+import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.http.MediaType;
+import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+class HolidayControllerTest extends ControllerTestSupport {
+
+    @Test
+    @DisplayName("Type은 대소문자 관계 없이 받아올 수 있어야 한다")
+    void requestWithType() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/holidays")
+                        .param("type", "public")
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("잘못된 Type을 입력하면 예외가 발생해야 한다")
+    void requestWithWrongType() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/holidays")
+                        .param("type", "none")
+                )
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("year를 단축하여 작성해도 제대로 동작되어야 한다")
+    void requestShortYear() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/holidays")
+                        .param("year", "25")
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("2020 이전년도 데이터를 요청하는 경우 예외가 발생해야 한다")
+    void requestBefore2020() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/holidays")
+                        .param("year", "2019")
+                )
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}, {1}")
+    @CsvSource(value = {
+            "from, 1",
+            "from, 11",
+            "from, 1111",
+            "from, 11-11",
+            "from, 11/11",
+            "to, 1",
+            "to, 11",
+            "to, 1111",
+            "to, 11-11",
+            "to, 11/11"
+    })
+    @DisplayName("날짜 검색 파라미터(from, to)는 year가 존재하는 경우 다양한 MM/MMdd 형식이 가능해야 한다")
+    void requestWithYearAndDateParameters(String paramName, String dateValue) throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/holidays")
+                        .param("year", "2025")
+                        .param(paramName, dateValue)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}, {1}")
+    @CsvSource(value = {
+            "from, 0",
+            "from, 13",
+            "from, 1132",
+            "from, 11-32",
+            "from, 11/32",
+            "to, 0",
+            "to, 13",
+            "to, 1132",
+            "to, 11-32",
+            "to, 11/32"
+    })
+    @DisplayName("날짜 검색 파라미터(from, to)는 year가 존재해도 잘못된 값은 실패해야 한다")
+    void requestWithYearAndWrongDateParameters(String paramName, String dateValue) throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/holidays")
+                        .param("year", "2025")
+                        .param(paramName, dateValue)
+                )
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}, {1}")
+    @CsvSource(value = {
+            "from, 1",
+            "from, 11",
+            "from, 1111",
+            "from, 11-11",
+            "from, 11/11",
+            "to, 1",
+            "to, 11",
+            "to, 1111",
+            "to, 11-11",
+            "to, 11/11"
+    })
+    @DisplayName("날짜 검색 파라미터(from, to)는 year가 존재하지 않는 경우 MM/MMdd 형식이 실패해야 한다")
+    void requestWithShortDateParameters(String paramName, String dateValue) throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/holidays")
+                        .param(paramName, dateValue)
+                )
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}, {1}")
+    @CsvSource(value = {
+            "from, 250625",
+            "from, 20250625",
+            "from, 25-06-25",
+            "from, 25/06/25",
+            "from, 2025-06-25",
+            "from, 2025/06/25",
+            "to, 250625",
+            "to, 20250625",
+            "to, 25-06-25",
+            "to, 25/06/25",
+            "to, 2025-06-25",
+            "to, 2025/06/25",
+    })
+    @DisplayName("날짜 검색 파라미터(from, to)는 year가 존재하지 않는 경우에도 형식이 맞으면 성공해야 한다")
+    void requestWithDateParameters(String paramName, String dateValue) throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/holidays")
+                        .param(paramName, dateValue)
+                )
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("공휴일 검색")
+    void postOfferCouponToAccountSuccessTest() throws Exception {
+
+        doNothing().when(holidayService)
+                .search(any(HolidaySearchRequest.class));
+
+        RequestBuilder request = RestDocumentationRequestBuilders
+                .get("/holidays")
+                .param("year", "2025")
+                .param("countryCode", "us")
+                .param("from", "0101")
+                .param("to", "1231")
+                .param("type", "public")
+                .param("countyCode", "us-ks")
+                .contentType(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(request)
+                .andDo(print())
+                .andExpect(status().isOk())
+
+                .andDo(document("searchHolidays",
+                        resource(ResourceSnippetParameters.builder()
+                                .summary("공휴일 검색")
+                                .description("여러 파라미터를 통해 공휴일을 검색합니다.")
+                                .queryParameters(
+                                        new ParameterDescriptorWithType("year").type(SimpleType.NUMBER).optional().description("년도. yyyy, yy 형식을 지원합니다."),
+                                        new ParameterDescriptorWithType("countryCode").type(SimpleType.STRING).optional().description("국가 코드"),
+                                        new ParameterDescriptorWithType("from").type(SimpleType.STRING).optional().description("검색 시작일. yyyyMMdd 형식으로 변환되며 -, / 구분자를 허용합니다. 년도를 작성한 경우 yyyy를 적지 않아도 지원됩니다. 년도가 작성된 상태에서 월만 적은 경우 해당 년도와 월의 시작 날짜로 변환됩니다."),
+                                        new ParameterDescriptorWithType("to").type(SimpleType.STRING).optional().description("검색 종료일. yyyyMMdd 형식으로 변환되며 -, / 구분자를 허용합니다. 년도를 작성한 경우 yyyy를 적지 않아도 지원됩니다. 년도가 작성된 상태에서 월만 적은 경우 해당 년도와 월의 마지막 날짜로 변환됩니다."),
+                                        new ParameterDescriptorWithType("type").type(SimpleType.STRING).optional().description("공휴일 타입."),
+                                        new ParameterDescriptorWithType("countyCode").type(SimpleType.STRING).optional().description("지역 코드.")
+                                )
+//                                .responseFields(
+//                                        fieldWithPath("id").type(NUMBER).description("회원 번호")
+//                                )
+                                .requestSchema(schema(HolidaySearchRequest.class.getName()))
+                                .build())));
+    }
+}
