@@ -108,7 +108,8 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
 
         JPAQuery<Long> count = countJoinOnType.where(
                         dateGoeIfPresentFrom(request.getFrom()),
-                        dateLoeIfPresentTo(request.getTo())
+                        dateLoeIfPresentTo(request.getTo()),
+                        filterCountryCodeIfPresent(request.getCountryCode())
                 );
 
         return PageableExecutionUtils.getPage(content, pageable, count::fetchOne);
