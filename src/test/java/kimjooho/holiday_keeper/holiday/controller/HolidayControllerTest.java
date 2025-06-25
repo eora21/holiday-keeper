@@ -3,20 +3,28 @@ package kimjooho.holiday_keeper.holiday.controller;
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static com.epages.restdocs.apispec.Schema.schema;
+import static com.epages.restdocs.apispec.SimpleType.NUMBER;
+import static com.epages.restdocs.apispec.SimpleType.STRING;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ParameterDescriptorWithType;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
-import com.epages.restdocs.apispec.SimpleType;
+import java.time.LocalDate;
+import java.util.List;
 import kimjooho.holiday_keeper.ControllerTestSupport;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
+import kimjooho.holiday_keeper.holiday.dto.HolidaySearchResponse;
+import kimjooho.holiday_keeper.type.Type;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.test.web.servlet.RequestBuilder;
@@ -160,8 +168,13 @@ class HolidayControllerTest extends ControllerTestSupport {
     @DisplayName("공휴일 검색")
     void postOfferCouponToAccountSuccessTest() throws Exception {
 
-        doNothing().when(holidayService)
-                .search(any(HolidaySearchRequest.class));
+        HolidaySearchResponse holidaySearchResponse = new HolidaySearchResponse(1L, "KR", "New Year's Day", "새해",
+                LocalDate.of(2025, 1, 1));
+        holidaySearchResponse.addType(Type.PUBLIC);
+
+        when(holidayService.search(any(HolidaySearchRequest.class), any(Pageable.class)))
+                .thenAnswer(invocation -> new PageImpl<>(List.of(holidaySearchResponse), invocation.getArgument(1), 1));
+
 
         RequestBuilder request = RestDocumentationRequestBuilders
                 .get("/holidays")
@@ -182,17 +195,27 @@ class HolidayControllerTest extends ControllerTestSupport {
                                 .summary("공휴일 검색")
                                 .description("여러 파라미터를 통해 공휴일을 검색합니다.")
                                 .queryParameters(
-                                        new ParameterDescriptorWithType("year").type(SimpleType.NUMBER).optional().description("년도. yyyy, yy 형식을 지원합니다."),
-                                        new ParameterDescriptorWithType("countryCode").type(SimpleType.STRING).optional().description("국가 코드"),
-                                        new ParameterDescriptorWithType("from").type(SimpleType.STRING).optional().description("검색 시작일. yyyyMMdd 형식으로 변환되며 -, / 구분자를 허용합니다. 년도를 작성한 경우 yyyy를 적지 않아도 지원됩니다. 년도가 작성된 상태에서 월만 적은 경우 해당 년도와 월의 시작 날짜로 변환됩니다."),
-                                        new ParameterDescriptorWithType("to").type(SimpleType.STRING).optional().description("검색 종료일. yyyyMMdd 형식으로 변환되며 -, / 구분자를 허용합니다. 년도를 작성한 경우 yyyy를 적지 않아도 지원됩니다. 년도가 작성된 상태에서 월만 적은 경우 해당 년도와 월의 마지막 날짜로 변환됩니다."),
-                                        new ParameterDescriptorWithType("type").type(SimpleType.STRING).optional().description("공휴일 타입."),
-                                        new ParameterDescriptorWithType("countyCode").type(SimpleType.STRING).optional().description("지역 코드.")
+                                        new ParameterDescriptorWithType("year").type(NUMBER).optional().description("년도. yyyy, yy 형식을 지원합니다."),
+                                        new ParameterDescriptorWithType("countryCode").type(STRING).optional().description("국가 코드"),
+                                        new ParameterDescriptorWithType("from").type(STRING).optional().description("검색 시작일. yyyyMMdd 형식으로 변환되며 -, / 구분자를 허용합니다. 년도를 작성한 경우 yyyy를 적지 않아도 지원됩니다. 년도가 작성된 상태에서 월만 적은 경우 해당 년도와 월의 시작 날짜로 변환됩니다."),
+                                        new ParameterDescriptorWithType("to").type(STRING).optional().description("검색 종료일. yyyyMMdd 형식으로 변환되며 -, / 구분자를 허용합니다. 년도를 작성한 경우 yyyy를 적지 않아도 지원됩니다. 년도가 작성된 상태에서 월만 적은 경우 해당 년도와 월의 마지막 날짜로 변환됩니다."),
+                                        new ParameterDescriptorWithType("type").type(STRING).optional().description("공휴일 타입"),
+                                        new ParameterDescriptorWithType("countyCode").type(STRING).optional().description("지역 코드")
                                 )
-//                                .responseFields(
-//                                        fieldWithPath("id").type(NUMBER).description("회원 번호")
-//                                )
+                                .responseFields(
+                                        fieldWithPath("content[].countryCode").type(STRING).description("국가 코드"),
+                                        fieldWithPath("content[].name").type(STRING).description("공휴일명"),
+                                        fieldWithPath("content[].localName").type(STRING).description("현지 공휴일명"),
+                                        fieldWithPath("content[].date").type(STRING).description("날짜"),
+                                        fieldWithPath("content[].countyCodes[]").type(STRING).description("해당 행정 구역"),
+                                        fieldWithPath("content[].types[]").type(STRING).description("해당 타입"),
+                                        fieldWithPath("page.size").type(STRING).description("요청 페이지 크기"),
+                                        fieldWithPath("page.number").type(STRING).description("요청 페이지 순서"),
+                                        fieldWithPath("page.totalElements").type(STRING).description("총 결과 수"),
+                                        fieldWithPath("page.totalPages").type(STRING).description("총 페이지 수")
+                                )
                                 .requestSchema(schema(HolidaySearchRequest.class.getName()))
+                                .responseSchema(schema(HolidaySearchResponse.class.getName()))
                                 .build())));
     }
 }
