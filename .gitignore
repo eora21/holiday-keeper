@@ -37,3 +37,6 @@ out/
 
 ### Swagger ###
 src/main/resources/static/docs
+
+### QueryDSL ###
+src/main/generated
