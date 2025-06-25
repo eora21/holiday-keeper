@@ -64,6 +64,14 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
         return holiday.date.loe(to);
     }
 
+    private static BooleanExpression filterCountryCodeIfPresent(String countryCode) {
+        if (Objects.isNull(countryCode)) {
+            return null;
+        }
+
+        return holiday.country.code.eq(countryCode);
+    }
+
     public Page<HolidaySearchResponse> searchHolidays(HolidaySearchRequest request, Pageable pageable) {
         JPAQuery<HolidaySearchResponse> contentSelectFrom = jpaQueryFactory
                 .select(new QHolidaySearchResponse(
@@ -80,7 +88,8 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
 
         List<HolidaySearchResponse> content = contentJoinOnType.where(
                         dateGoeIfPresentFrom(request.getFrom()),
-                        dateLoeIfPresentTo(request.getTo())
+                        dateLoeIfPresentTo(request.getTo()),
+                        filterCountryCodeIfPresent(request.getCountryCode())
                 )
 
                 .offset(pageable.getOffset())
