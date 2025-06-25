@@ -2,6 +2,11 @@ package kimjooho.holiday_keeper.holiday.controller;
 
 import jakarta.validation.Valid;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
+import kimjooho.holiday_keeper.holiday.dto.HolidaySearchResponse;
+import kimjooho.holiday_keeper.holiday.service.HolidayService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -10,13 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/holidays")
+@RequiredArgsConstructor
 public class HolidayController {
+    private final HolidayService holidayService;
 
     @GetMapping
-    public ResponseEntity<Void> searchHolidays(@Valid @ModelAttribute HolidaySearchRequest searchParamRequest) {
+    public ResponseEntity<Page<HolidaySearchResponse>> searchHolidays(
+            @Valid @ModelAttribute HolidaySearchRequest searchParamRequest,
+            Pageable pageable) {
 
-        // TODO: searchParam 값에 따라 QueryDSL 필터를 동적 추가하여 결과를 반환해야 한다
-        return ResponseEntity.ok()
-                .build();
+        Page<HolidaySearchResponse> searchResponse = holidayService.search(searchParamRequest, pageable);
+        return ResponseEntity.ok(searchResponse);
     }
 }
