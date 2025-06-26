@@ -8,6 +8,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
@@ -113,5 +114,13 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
                 );
 
         return PageableExecutionUtils.getPage(content, pageable, count::fetchOne);
+    }
+
+    @Override
+    public void deleteAllByIdIn(Collection<Long> holidayIds) {
+        jpaQueryFactory
+                .delete(holiday)
+                .where(holiday.id.in(holidayIds))
+                .execute();
     }
 }

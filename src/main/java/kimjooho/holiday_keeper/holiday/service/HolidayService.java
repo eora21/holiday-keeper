@@ -1,5 +1,6 @@
 package kimjooho.holiday_keeper.holiday.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -7,6 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.stream.Collectors;
+import kimjooho.holiday_keeper.holiday.dto.HolidayIdResponse;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchResponse;
 import kimjooho.holiday_keeper.holiday.repository.HolidayRepository;
@@ -42,7 +44,7 @@ public class HolidayService {
         holidayCounties
                 .forEach(holidayCounty ->
                         addInfo(idAndHolidaySearchResponse, () ->
-                                holidayCounty.getHoliday().getId(),
+                                        holidayCounty.getHoliday().getId(),
                                 HolidaySearchResponse::addCountyCode,
                                 holidayCounty.getCounty().getCode()));
 
@@ -61,5 +63,20 @@ public class HolidayService {
 
         HolidaySearchResponse holidaySearchResponse = idAndResponse.get(findId.getAsLong());
         add.accept(holidaySearchResponse, param);
+    }
+
+    @Transactional
+    public void delete(int year, String countryCode) {
+        LocalDate startLocalDate = LocalDate.of(year, 1, 1);
+        LocalDate endLocalDate = LocalDate.of(year, 12, 31);
+
+        List<Long> holidayIds =
+                holidayRepository.findAllByDateBetweenAndCountryCode(startLocalDate, endLocalDate, countryCode)
+                        .stream().map(HolidayIdResponse::getId)
+                        .toList();
+
+        holidayCountyRepository.deleteAllByHolidayIdIn(holidayIds);
+        holidayTypeRepository.deleteAllByHolidayIdIn(holidayIds);
+        holidayRepository.deleteAllByIdIn(holidayIds);
     }
 }
