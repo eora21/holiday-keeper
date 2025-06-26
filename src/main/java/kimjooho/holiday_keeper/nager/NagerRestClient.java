@@ -34,7 +34,7 @@ public class NagerRestClient {
                 .body(new ParameterizedTypeReference<>() {});
     }
 
-    List<NagerHolidayResponse> getHolidays(int year, String countryCode) {
+    public List<NagerHolidayResponse> getHolidays(int year, String countryCode) {
         return restClient.get()
                 .uri(holidays, year, countryCode)
                 .retrieve()

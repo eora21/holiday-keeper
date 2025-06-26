@@ -45,4 +45,8 @@ public class Holiday {
         this.name = name;
         this.localName = localName;
     }
+
+    public void update(String localName) {
+        this.localName = localName;
+    }
 }

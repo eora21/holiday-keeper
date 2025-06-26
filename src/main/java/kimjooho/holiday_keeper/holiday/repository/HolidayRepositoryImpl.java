@@ -14,6 +14,7 @@ import java.util.Objects;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchResponse;
 import kimjooho.holiday_keeper.holiday.dto.QHolidaySearchResponse;
+import kimjooho.holiday_keeper.holiday.entity.Holiday;
 import kimjooho.holiday_keeper.type.Type;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -73,6 +74,19 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
         return holiday.country.code.eq(countryCode);
     }
 
+    public List<Holiday> selectOneYearHolidays(int year, String countryCode) {
+        return jpaQueryFactory
+                .selectFrom(holiday)
+
+                .where(
+                        holiday.date.goe(LocalDate.of(year, 1, 1)),
+                        holiday.date.loe(LocalDate.of(year, 12, 31)),
+                        holiday.country.code.eq(countryCode)
+                )
+
+                .fetch();
+    }
+
     public Page<HolidaySearchResponse> searchHolidays(HolidaySearchRequest request, Pageable pageable) {
         JPAQuery<HolidaySearchResponse> contentSelectFrom = jpaQueryFactory
                 .select(new QHolidaySearchResponse(
@@ -84,8 +98,11 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
                 ))
                 .from(holiday);
 
-        JPAQuery<HolidaySearchResponse> contentJoinOnCounty = joinOnCountyIfPresentCounty(contentSelectFrom, request.getCountyCode());
-        JPAQuery<HolidaySearchResponse> contentJoinOnType = joinOnTypeIfPresentCounty(contentJoinOnCounty, request.getType());
+        JPAQuery<HolidaySearchResponse> contentJoinOnCounty =
+                joinOnCountyIfPresentCounty(contentSelectFrom, request.getCountyCode());
+
+        JPAQuery<HolidaySearchResponse> contentJoinOnType =
+                joinOnTypeIfPresentCounty(contentJoinOnCounty, request.getType());
 
         List<HolidaySearchResponse> content = contentJoinOnType.where(
                         dateGoeIfPresentFrom(request.getFrom()),
