@@ -38,11 +38,11 @@ public class HolidaySearchRequest {
         year = convertYear(year);
 
         this.year = year;
-        this.countryCode = countryCode;
+        this.countryCode = getUpperCaseIfPresent(countryCode);
         this.from = convertToLocalDateForm(year, from);
         this.to = convertToLocalDateForm(year, to);
         this.type = type;
-        this.countyCode = countyCode;
+        this.countyCode = getUpperCaseIfPresent(countyCode);
         this.skipDayFlagForTo = isSkipDay(to);
     }
 
@@ -88,6 +88,14 @@ public class HolidaySearchRequest {
         }
 
         return forParse;
+    }
+
+    private static String getUpperCaseIfPresent(String value) {
+        if (Objects.isNull(value)) {
+            return null;
+        }
+
+        return value.toUpperCase();
     }
 
     public LocalDate getFrom() {
