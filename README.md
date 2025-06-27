@@ -163,6 +163,8 @@ HTTP/1.1 204 No Content
 
 # ./gradlew clean test 성공 스크린샷
 
+![image](https://github.com/user-attachments/assets/28541b1a-8458-4966-9586-0bc4549462fe)
+
 # Swagger UI 또는 OpenAPI JSON 노출 확인 방법
 
 > swagger 설정은 [이전에 작성한 swagger 설정글](https://velog.io/@eora21/restdocs-swaggerUI-설정하기)을 토대로 구성하였습니다.
@@ -593,8 +595,8 @@ SELECT 쿼리 1번, DELETE 쿼리 3번으로 해결할 수 있었습니다.
       - [x] 쿼리 최소화 발행
   - [ ] 배치 자동화(선택)
     - [ ] 매년 1월 2일 01:00 KST에 전년도/금년도 데이터 자동 동기화
-- [ ] README
+- [x] README
   - [x] 빌드 & 실행 방법
   - [x] 설계한 REST API 명세 요약(엔드포인트, 파라미터, 응답 예시)
-  - [ ] ./gradlew clean test 성공 스크린샷 (테스트 작성 시)
+  - [x] ./gradlew clean test 성공 스크린샷 (테스트 작성 시)
   - [x] Swagger UI 또는 OpenAPI JSON 노출 확인 방법
