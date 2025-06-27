@@ -2,6 +2,7 @@ package kimjooho.holiday_keeper.holiday.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
@@ -11,7 +12,6 @@ import kimjooho.holiday_keeper.country.entity.Country;
 import kimjooho.holiday_keeper.country.repository.CountryRepository;
 import kimjooho.holiday_keeper.county.entity.County;
 import kimjooho.holiday_keeper.county.repository.CountyRepository;
-import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchResponse;
 import kimjooho.holiday_keeper.holiday.entity.Holiday;
 import kimjooho.holiday_keeper.holiday.repository.HolidayRepository;
@@ -60,7 +60,8 @@ class HolidayServiceTest {
         LocalDate localDate = LocalDate.of(2025, 4, 1);
         String aprilFoolsDay = "april fools day";
 
-        when(holidayRepository.searchHolidays(any(HolidaySearchRequest.class), any(Pageable.class)))
+        when(holidayRepository.searchHolidays(nullable(LocalDate.class), nullable(LocalDate.class),
+                nullable(String.class), nullable(String.class), nullable(Type.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(
                         new HolidaySearchResponse(1L, "KR", aprilFoolsDay, "만우절", localDate),
                         new HolidaySearchResponse(2L, "AU", aprilFoolsDay, aprilFoolsDay, localDate)
@@ -80,8 +81,8 @@ class HolidayServiceTest {
                 ));
 
         // when
-        Page<HolidaySearchResponse> holidaySearchResponses = holidayService.search(
-                new HolidaySearchRequest(2025, null, "0401", "0401", null, null), Pageable.ofSize(20));
+        Page<HolidaySearchResponse> holidaySearchResponses = holidayService.search(LocalDate.of(2025, 4, 1),
+                LocalDate.of(2025, 4, 1), null, null, null, Pageable.ofSize(20));
 
         // then
         Assertions.assertThat(holidaySearchResponses.getTotalElements()).isEqualTo(2);
@@ -101,7 +102,8 @@ class HolidayServiceTest {
         LocalDate localDate = LocalDate.of(2025, 4, 1);
         String aprilFoolsDay = "april fools day";
 
-        when(holidayRepository.searchHolidays(any(HolidaySearchRequest.class), any(Pageable.class)))
+        when(holidayRepository.searchHolidays(nullable(LocalDate.class), nullable(LocalDate.class),
+                nullable(String.class), nullable(String.class), nullable(Type.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(
                         new HolidaySearchResponse(1L, "KR", aprilFoolsDay, "만우절", localDate),
                         new HolidaySearchResponse(2L, "AU", aprilFoolsDay, aprilFoolsDay, localDate)
@@ -124,8 +126,8 @@ class HolidayServiceTest {
                 ));
 
         // when
-        Page<HolidaySearchResponse> holidaySearchResponses = holidayService.search(
-                new HolidaySearchRequest(2025, null, "0401", "0401", null, null), Pageable.ofSize(20));
+        Page<HolidaySearchResponse> holidaySearchResponses = holidayService.search(LocalDate.of(2025, 4, 1),
+                LocalDate.of(2025, 4, 1), null, null, null, Pageable.ofSize(20));
 
         // then
         Assertions.assertThat(holidaySearchResponses.getTotalElements()).isEqualTo(2);

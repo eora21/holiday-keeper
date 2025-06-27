@@ -6,6 +6,7 @@ import static com.epages.restdocs.apispec.Schema.schema;
 import static com.epages.restdocs.apispec.SimpleType.NUMBER;
 import static com.epages.restdocs.apispec.SimpleType.STRING;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -172,8 +173,9 @@ class HolidayControllerTest extends ControllerTestSupport {
                 LocalDate.of(2025, 1, 1));
         holidaySearchResponse.addType(Type.PUBLIC);
 
-        when(holidayService.search(any(HolidaySearchRequest.class), any(Pageable.class)))
-                .thenAnswer(invocation -> new PageImpl<>(List.of(holidaySearchResponse), invocation.getArgument(1), 1));
+        when(holidayService.search(any(LocalDate.class), any(LocalDate.class), anyString(), anyString(),
+                any(Type.class), any(Pageable.class)))
+                .thenAnswer(invocation -> new PageImpl<>(List.of(holidaySearchResponse), invocation.getArgument(5), 1));
 
 
         RequestBuilder request = RestDocumentationRequestBuilders
