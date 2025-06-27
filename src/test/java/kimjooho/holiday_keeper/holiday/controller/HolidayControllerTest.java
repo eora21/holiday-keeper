@@ -167,7 +167,7 @@ class HolidayControllerTest extends ControllerTestSupport {
 
     @Test
     @DisplayName("공휴일 검색")
-    void postOfferCouponToAccountSuccessTest() throws Exception {
+    void searchHolidays() throws Exception {
 
         HolidaySearchResponse holidaySearchResponse = new HolidaySearchResponse(1L, "KR", "New Year's Day", "새해",
                 LocalDate.of(2025, 1, 1));
@@ -218,6 +218,52 @@ class HolidayControllerTest extends ControllerTestSupport {
                                 )
                                 .requestSchema(schema(HolidaySearchRequest.class.getName()))
                                 .responseSchema(schema(HolidaySearchResponse.class.getName()))
+                                .build())));
+    }
+
+    @Test
+    @DisplayName("공휴일 삭제")
+    void deleteHolidays() throws Exception {
+
+        RequestBuilder request = RestDocumentationRequestBuilders
+                .delete("/holidays/{year}/{countryCode}", 2025, "KR")
+                .contentType(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(request)
+                .andDo(print())
+                .andExpect(status().isNoContent())
+
+                .andDo(document("deleteHolidays",
+                        resource(ResourceSnippetParameters.builder()
+                                .summary("공휴일 삭제")
+                                .description("연도, 국가코드와 일치하는 공휴일들을 삭제합니다.")
+                                .pathParameters(
+                                        new ParameterDescriptorWithType("year").type(NUMBER).description("연도. yyyy 형식을 지원합니다."),
+                                        new ParameterDescriptorWithType("countryCode").type(STRING).description("국가 코드")
+                                )
+                                .build())));
+    }
+
+    @Test
+    @DisplayName("공휴일 동기화")
+    void putHolidays() throws Exception {
+
+        RequestBuilder request = RestDocumentationRequestBuilders
+                .put("/holidays/{year}/{countryCode}", 2025, "KR")
+                .contentType(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(request)
+                .andDo(print())
+                .andExpect(status().isOk())
+
+                .andDo(document("putHolidays",
+                        resource(ResourceSnippetParameters.builder()
+                                .summary("공휴일 동기화")
+                                .description("연도, 국가코드와 일치하는 공휴일들을 불러와 동기화합니다. 이미 존재하던 공휴일은 업데이트되고, 존재하지 않는 공휴일은 추가됩니다.")
+                                .pathParameters(
+                                        new ParameterDescriptorWithType("year").type(NUMBER).description("연도. yyyy 형식을 지원합니다."),
+                                        new ParameterDescriptorWithType("countryCode").type(STRING).description("국가 코드")
+                                )
                                 .build())));
     }
 }
