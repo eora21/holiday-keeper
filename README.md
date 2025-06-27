@@ -1,6 +1,165 @@
 # 빌드 & 실행 방법
 
+## 빌드
+
+`./gradlew clean build`
+
+## 실행
+
+`java -jar build/libs/holiday_keeper-0.0.1-SNAPSHOT.jar`
+
 # 설계한 REST API 명세 요약
+
+## 공휴일 조회
+
+### request
+
+> GET /holidays?year=:year&countryCode=:countryCode&from=:from&to=:to&type=:type&countyCode=:countyCode&page=:page&size=:size
+
+```http request
+GET http://localhost:8080/holidays?year=25&countryCode=au&from=1&to=12&type=public&countyCode=au-act&page=0&size=20
+```
+
+### response
+
+> 잘못된 쿼리 파라미터가 있다면 예외 메시지와 함께 400이 반환됩니다.
+
+```http
+HTTP/1.1 200 OK
+
+{
+  "content": [
+    {
+      "countryCode": "AU",
+      "name": "Canberra Day",
+      "localName": "Canberra Day",
+      "date": "2025-03-10",
+      "countyCodes": [
+        "AU-ACT"
+      ],
+      "types": [
+        "PUBLIC"
+      ]
+    },
+    {
+      "countryCode": "AU",
+      "name": "Holy Saturday",
+      "localName": "Easter Eve",
+      "date": "2025-04-19",
+      "countyCodes": [
+        "AU-ACT",
+        "AU-NSW",
+        "AU-NT",
+        "AU-QLD",
+        "AU-SA",
+        "AU-VIC"
+      ],
+      "types": [
+        "PUBLIC"
+      ]
+    },
+    {
+      "countryCode": "AU",
+      "name": "Easter Sunday",
+      "localName": "Easter Sunday",
+      "date": "2025-04-20",
+      "countyCodes": [
+        "AU-ACT",
+        "AU-NSW",
+        "AU-NT",
+        "AU-QLD",
+        "AU-SA",
+        "AU-VIC",
+        "AU-WA"
+      ],
+      "types": [
+        "PUBLIC"
+      ]
+    },
+    {
+      "countryCode": "AU",
+      "name": "Reconciliation Day",
+      "localName": "Reconciliation Day",
+      "date": "2025-06-02",
+      "countyCodes": [
+        "AU-ACT"
+      ],
+      "types": [
+        "PUBLIC"
+      ]
+    },
+    {
+      "countryCode": "AU",
+      "name": "King's Birthday",
+      "localName": "King's Birthday",
+      "date": "2025-06-09",
+      "countyCodes": [
+        "AU-ACT",
+        "AU-NSW",
+        "AU-NT",
+        "AU-SA",
+        "AU-TAS",
+        "AU-VIC"
+      ],
+      "types": [
+        "PUBLIC"
+      ]
+    },
+    {
+      "countryCode": "AU",
+      "name": "Labour Day",
+      "localName": "Labour Day",
+      "date": "2025-10-06",
+      "countyCodes": [
+        "AU-ACT",
+        "AU-NSW",
+        "AU-SA"
+      ],
+      "types": [
+        "PUBLIC"
+      ]
+    }
+  ],
+  "page": {
+    "size": 20,
+    "number": 0,
+    "totalElements": 6,
+    "totalPages": 1
+  }
+}
+```
+
+## 공휴일 동기화
+
+### request
+
+> PUT /holidays/{year}/{countryCode}
+
+```http request
+PUT http://localhost:8080/holidays/2025/KR
+```
+
+### response
+
+```http
+HTTP/1.1 200 OK
+```
+
+## 공휴일 삭제
+
+### request
+
+> DELETE /holidays/{year}/{countryCode}
+
+```http request
+DELETE http://localhost:8080/holidays/2025/KR
+```
+
+### response
+
+```http
+HTTP/1.1 204 No Content
+```
 
 # ./gradlew clean test 성공 스크린샷
 
@@ -329,13 +488,27 @@ graph LR
 
 HolidayService에서 하나의 트랜잭션으로 Holiday, HolidayCounty, HolidayType, County에 대한 UPSERT를 모두 구축하다보니 로직이 굉장히 복잡해졌습니다.
 
-이를 하나의 트랜잭션으로 묶으면서도 각 책임을 분배하기 위해선 여러 방법이 있겠으나, 이전에 레이어를 한 계층 추가하여 가독성을 살리면서도 책임을 명확히 분배하는 방식을 구성한 적이 있습니다.
+이는 다음과 같은 결과를 초래했습니다.
 
-이번에도 이같은 방법을 구축해보면 좋겠다고 생각하고 있으나, '정해진 데드라인 안에 완료할 수 있을까'라는 생각에 시도하지 못 해 아쉽습니다.
+#### 코드 가독성
 
-해당 리드미를 작성하는 시간 기준으로 남은 목표들은 배치 자동화와 각 테스트코드, 그리고 CompletableFuture 리팩토링이 있습니다.
+Service 코드만 참조하는 경우, 어떤 로직이 수행되는지 한눈에 이해할 수 없습니다.
 
-모두 가능하지는 않을 것 같으나, 최대한 시간을 쪼개어 퀄리티를 높여볼 생각입니다.
+굉장히 많은 코드를 참조해야 하며, 최대한 메서드를 분리한다 해도 로직의 복잡성은 그대로기에 추후 유지보수가 어려울 가능성이 큽니다.
+
+#### 효율적인 테스트 불가
+
+현재 해당 Service의 응답은 void입니다.
+
+'추가된 공휴일', '기존에 존재하던 공휴일', '제거된 공휴일'을 모두 return한다면 테스트를 작성할 수 있을 것입니다.
+
+다만 '해당 데이터들을 클라이언트에게 전달하는 것이 옳은가?'라는 의문이 있습니다.
+
+1년치 공휴일은 경우에 따라 그 수가 상당히 많을 수 있으며, 일회성 데이터이기에 페이지네이션으로 전달하는 것도 의미가 없습니다.
+
+'테스트를 위해 실제 코드를 변경한다'는 옳지 않은 흐름이라 생각하며, 테스트 용이성을 고려해 재설계하는 것이 더 나을 것입니다.
+
+해당 문제들을 해결하기 위해 [이전의 경험](https://velog.io/@eora21/너나드리-Implement-Layer를-통한-이미지-파일-저장과-Entity-영속화에-대한-고민-해결-과정)과 같이 `operator`라는 계층을 추가해보기로 했으나, 실질적인 시간 부족으로 포기해야 했습니다. (제출 당일인 6월 28일에 갑작스런 일정이 생겨 부득이하게 미완성하게 되었습니다.)
 
 ## 삭제 최적화
 
@@ -421,7 +594,7 @@ SELECT 쿼리 1번, DELETE 쿼리 3번으로 해결할 수 있었습니다.
   - [ ] 배치 자동화(선택)
     - [ ] 매년 1월 2일 01:00 KST에 전년도/금년도 데이터 자동 동기화
 - [ ] README
-  - [ ] 빌드 & 실행 방법
-  - [ ] 설계한 REST API 명세 요약(엔드포인트, 파라미터, 응답 예시)
+  - [x] 빌드 & 실행 방법
+  - [x] 설계한 REST API 명세 요약(엔드포인트, 파라미터, 응답 예시)
   - [ ] ./gradlew clean test 성공 스크린샷 (테스트 작성 시)
   - [x] Swagger UI 또는 OpenAPI JSON 노출 확인 방법
