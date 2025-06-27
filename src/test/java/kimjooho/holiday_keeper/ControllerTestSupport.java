@@ -2,6 +2,7 @@ package kimjooho.holiday_keeper;
 
 import kimjooho.holiday_keeper.holiday.service.HolidayService;
 import kimjooho.holiday_keeper.nager.NagerPreparer;
+import kimjooho.holiday_keeper.nager.NagerRestClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,6 +20,9 @@ public class ControllerTestSupport {
 
     @MockitoBean
     protected NagerPreparer nagerPreparer;
+
+    @MockitoBean
+    protected NagerRestClient nagerRestClient;
 
     @MockitoBean
     protected HolidayService holidayService;
