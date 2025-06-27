@@ -107,4 +107,32 @@ class HolidaySearchRequestTest {
         Assertions.assertThat(from).isEqualTo(LocalDate.of(2020, 1, 1));
         Assertions.assertThat(to).isEqualTo(LocalDate.of(2020, 12, 31));
     }
+
+    @Test
+    @DisplayName("국가 코드는 소문자로 입력되어도 대문자로 인식되어야 한다")
+    void getCountryCodeUpperCase() throws Exception {
+
+        // given
+        HolidaySearchRequest holidaySearchRequest = new HolidaySearchRequest(null, "kr", null, null, null, null);
+
+        // when
+        String countryCode = holidaySearchRequest.getCountryCode();
+
+        // then
+        Assertions.assertThat(countryCode).isEqualTo("KR");
+    }
+
+    @Test
+    @DisplayName("행정구역 코드는 소문자로 입력되어도 대문자로 인식되어야 한다")
+    void getCountyCodeUpperCase() throws Exception {
+
+        // given
+        HolidaySearchRequest holidaySearchRequest = new HolidaySearchRequest(null, null, null, null, null, "au-sa");
+
+        // when
+        String countryCode = holidaySearchRequest.getCountyCode();
+
+        // then
+        Assertions.assertThat(countryCode).isEqualTo("AU-SA");
+    }
 }
