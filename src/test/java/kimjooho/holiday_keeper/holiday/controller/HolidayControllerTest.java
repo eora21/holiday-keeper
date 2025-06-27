@@ -202,7 +202,10 @@ class HolidayControllerTest extends ControllerTestSupport {
                                         new ParameterDescriptorWithType("from").type(STRING).optional().description("검색 시작일. yyyyMMdd 형식으로 변환되며 -, / 구분자를 허용합니다. 년도를 작성한 경우 yyyy를 적지 않아도 지원됩니다. 년도가 작성된 상태에서 월만 적은 경우 해당 년도와 월의 시작 날짜로 변환됩니다."),
                                         new ParameterDescriptorWithType("to").type(STRING).optional().description("검색 종료일. yyyyMMdd 형식으로 변환되며 -, / 구분자를 허용합니다. 년도를 작성한 경우 yyyy를 적지 않아도 지원됩니다. 년도가 작성된 상태에서 월만 적은 경우 해당 년도와 월의 마지막 날짜로 변환됩니다."),
                                         new ParameterDescriptorWithType("type").type(STRING).optional().description("공휴일 타입"),
-                                        new ParameterDescriptorWithType("countyCode").type(STRING).optional().description("지역 코드")
+                                        new ParameterDescriptorWithType("countyCode").type(STRING).optional().description("지역 코드"),
+                                        new ParameterDescriptorWithType("page").type(NUMBER).optional().description("페이지"),
+                                        new ParameterDescriptorWithType("size").type(NUMBER).optional().description("한 페이지 당 크기"),
+                                        new ParameterDescriptorWithType("sort").type(STRING).optional().description("정렬(미구현)")
                                 )
                                 .responseFields(
                                         fieldWithPath("content[].countryCode").type(STRING).description("국가 코드"),
