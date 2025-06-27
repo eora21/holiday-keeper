@@ -26,44 +26,44 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
 
     private final JPAQueryFactory jpaQueryFactory;
 
-    private static <T> JPAQuery<T> joinOnCountyIfPresentCounty(
-            JPAQuery<T> getFromHoliday, String countyCode) {
+    private static <T> JPAQuery<T> joinOnCountyIfPresent(
+            JPAQuery<T> jpaQuery, String countyCode) {
 
         if (Objects.isNull(countyCode)) {
-            return getFromHoliday;
+            return jpaQuery;
         }
 
-        return getFromHoliday
+        return jpaQuery
                 .innerJoin(holidayCounty)
                 .on(holidayCounty.id.countyCode.eq(countyCode), holidayCounty.holiday.eq(holiday));
     }
 
-    private static <T> JPAQuery<T> joinOnTypeIfPresentCounty(
-            JPAQuery<T> joinOnCounty, Type type) {
+    private static <T> JPAQuery<T> joinOnTypeIfPresent(
+            JPAQuery<T> jpaQuery, Type type) {
 
         if (Objects.isNull(type)) {
-            return joinOnCounty;
+            return jpaQuery;
         }
 
-        return joinOnCounty
+        return jpaQuery
                 .innerJoin(holidayType)
                 .on(holidayType.id.type.eq(type), holidayType.holiday.eq(holiday));
     }
 
-    private static BooleanExpression dateGoeIfPresentFrom(LocalDate from) {
-        if (Objects.isNull(from)) {
+    private static BooleanExpression filterDateGoeIfPresent(LocalDate date) {
+        if (Objects.isNull(date)) {
             return null;
         }
 
-        return holiday.date.goe(from);
+        return holiday.date.goe(date);
     }
 
-    private static BooleanExpression dateLoeIfPresentTo(LocalDate to) {
-        if (Objects.isNull(to)) {
+    private static BooleanExpression filterDateLoeIfPresent(LocalDate date) {
+        if (Objects.isNull(date)) {
             return null;
         }
 
-        return holiday.date.loe(to);
+        return holiday.date.loe(date);
     }
 
     private static BooleanExpression filterCountryCodeIfPresent(String countryCode) {
@@ -72,19 +72,6 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
         }
 
         return holiday.country.code.eq(countryCode);
-    }
-
-    public List<Holiday> selectOneYearHolidays(int year, String countryCode) {
-        return jpaQueryFactory
-                .selectFrom(holiday)
-
-                .where(
-                        holiday.date.goe(LocalDate.of(year, 1, 1)),
-                        holiday.date.loe(LocalDate.of(year, 12, 31)),
-                        holiday.country.code.eq(countryCode)
-                )
-
-                .fetch();
     }
 
     public Page<HolidaySearchResponse> searchHolidays(HolidaySearchRequest request, Pageable pageable) {
@@ -99,14 +86,14 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
                 .from(holiday);
 
         JPAQuery<HolidaySearchResponse> contentJoinOnCounty =
-                joinOnCountyIfPresentCounty(contentSelectFrom, request.getCountyCode());
+                joinOnCountyIfPresent(contentSelectFrom, request.getCountyCode());
 
         JPAQuery<HolidaySearchResponse> contentJoinOnType =
-                joinOnTypeIfPresentCounty(contentJoinOnCounty, request.getType());
+                joinOnTypeIfPresent(contentJoinOnCounty, request.getType());
 
         List<HolidaySearchResponse> content = contentJoinOnType.where(
-                        dateGoeIfPresentFrom(request.getFrom()),
-                        dateLoeIfPresentTo(request.getTo()),
+                        filterDateGoeIfPresent(request.getFrom()),
+                        filterDateLoeIfPresent(request.getTo()),
                         filterCountryCodeIfPresent(request.getCountryCode())
                 )
 
@@ -121,16 +108,29 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
                 .select(holiday.count())
                 .from(holiday);
 
-        JPAQuery<Long> countJoinOnCounty = joinOnCountyIfPresentCounty(countSelectFrom, request.getCountyCode());
-        JPAQuery<Long> countJoinOnType = joinOnTypeIfPresentCounty(countJoinOnCounty, request.getType());
+        JPAQuery<Long> countJoinOnCounty = joinOnCountyIfPresent(countSelectFrom, request.getCountyCode());
+        JPAQuery<Long> countJoinOnType = joinOnTypeIfPresent(countJoinOnCounty, request.getType());
 
         JPAQuery<Long> count = countJoinOnType.where(
-                        dateGoeIfPresentFrom(request.getFrom()),
-                        dateLoeIfPresentTo(request.getTo()),
-                        filterCountryCodeIfPresent(request.getCountryCode())
-                );
+                filterDateGoeIfPresent(request.getFrom()),
+                filterDateLoeIfPresent(request.getTo()),
+                filterCountryCodeIfPresent(request.getCountryCode())
+        );
 
         return PageableExecutionUtils.getPage(content, pageable, count::fetchOne);
+    }
+
+    public List<Holiday> selectOneYearHolidays(int year, String countryCode) {
+        return jpaQueryFactory
+                .selectFrom(holiday)
+
+                .where(
+                        holiday.date.goe(LocalDate.of(year, 1, 1)),
+                        holiday.date.loe(LocalDate.of(year, 12, 31)),
+                        holiday.country.code.eq(countryCode)
+                )
+
+                .fetch();
     }
 
     @Override
