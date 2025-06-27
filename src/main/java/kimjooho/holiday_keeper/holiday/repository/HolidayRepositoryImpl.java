@@ -11,7 +11,6 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchResponse;
 import kimjooho.holiday_keeper.holiday.dto.QHolidaySearchResponse;
 import kimjooho.holiday_keeper.holiday.entity.Holiday;
@@ -74,7 +73,9 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
         return holiday.country.code.eq(countryCode);
     }
 
-    public Page<HolidaySearchResponse> searchHolidays(HolidaySearchRequest request, Pageable pageable) {
+    public Page<HolidaySearchResponse> searchHolidays(LocalDate from, LocalDate to, String countryCode,
+                                                      String countyCode, Type type, Pageable pageable) {
+
         JPAQuery<HolidaySearchResponse> contentSelectFrom = jpaQueryFactory
                 .select(new QHolidaySearchResponse(
                         holiday.id,
@@ -85,16 +86,13 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
                 ))
                 .from(holiday);
 
-        JPAQuery<HolidaySearchResponse> contentJoinOnCounty =
-                joinOnCountyIfPresent(contentSelectFrom, request.getCountyCode());
-
-        JPAQuery<HolidaySearchResponse> contentJoinOnType =
-                joinOnTypeIfPresent(contentJoinOnCounty, request.getType());
+        JPAQuery<HolidaySearchResponse> contentJoinOnCounty = joinOnCountyIfPresent(contentSelectFrom, countyCode);
+        JPAQuery<HolidaySearchResponse> contentJoinOnType = joinOnTypeIfPresent(contentJoinOnCounty, type);
 
         List<HolidaySearchResponse> content = contentJoinOnType.where(
-                        filterDateGoeIfPresent(request.getFrom()),
-                        filterDateLoeIfPresent(request.getTo()),
-                        filterCountryCodeIfPresent(request.getCountryCode())
+                        filterDateGoeIfPresent(from),
+                        filterDateLoeIfPresent(to),
+                        filterCountryCodeIfPresent(countryCode)
                 )
 
                 .offset(pageable.getOffset())
@@ -108,13 +106,13 @@ public class HolidayRepositoryImpl implements HolidayRepositoryCustom {
                 .select(holiday.count())
                 .from(holiday);
 
-        JPAQuery<Long> countJoinOnCounty = joinOnCountyIfPresent(countSelectFrom, request.getCountyCode());
-        JPAQuery<Long> countJoinOnType = joinOnTypeIfPresent(countJoinOnCounty, request.getType());
+        JPAQuery<Long> countJoinOnCounty = joinOnCountyIfPresent(countSelectFrom, countyCode);
+        JPAQuery<Long> countJoinOnType = joinOnTypeIfPresent(countJoinOnCounty, type);
 
         JPAQuery<Long> count = countJoinOnType.where(
-                filterDateGoeIfPresent(request.getFrom()),
-                filterDateLoeIfPresent(request.getTo()),
-                filterCountryCodeIfPresent(request.getCountryCode())
+                filterDateGoeIfPresent(from),
+                filterDateLoeIfPresent(to),
+                filterCountryCodeIfPresent(countryCode)
         );
 
         return PageableExecutionUtils.getPage(content, pageable, count::fetchOne);

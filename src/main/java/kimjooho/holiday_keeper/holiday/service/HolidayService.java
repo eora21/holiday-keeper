@@ -16,7 +16,6 @@ import kimjooho.holiday_keeper.country.repository.CountryRepository;
 import kimjooho.holiday_keeper.county.entity.County;
 import kimjooho.holiday_keeper.county.repository.CountyRepository;
 import kimjooho.holiday_keeper.holiday.dto.HolidayIdResponse;
-import kimjooho.holiday_keeper.holiday.dto.HolidaySearchRequest;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySearchResponse;
 import kimjooho.holiday_keeper.holiday.dto.HolidaySuper;
 import kimjooho.holiday_keeper.holiday.entity.Holiday;
@@ -26,6 +25,7 @@ import kimjooho.holiday_keeper.holiday_county.repository.HolidayCountyRepository
 import kimjooho.holiday_keeper.holiday_type.entity.HolidayType;
 import kimjooho.holiday_keeper.holiday_type.repository.HolidayTypeRepository;
 import kimjooho.holiday_keeper.nager.NagerHolidayResponse;
+import kimjooho.holiday_keeper.type.Type;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,8 +42,11 @@ public class HolidayService {
     private final CountyRepository countyRepository;
 
     @Transactional(readOnly = true)
-    public Page<HolidaySearchResponse> search(HolidaySearchRequest request, Pageable pageable) {
-        Page<HolidaySearchResponse> holidaySearchResponses = holidayRepository.searchHolidays(request, pageable);
+    public Page<HolidaySearchResponse> search(LocalDate from, LocalDate to, String countryCode, String countyCode,
+                                              Type type, Pageable pageable) {
+
+        Page<HolidaySearchResponse> holidaySearchResponses =
+                holidayRepository.searchHolidays(from, to, countryCode, countyCode, type, pageable);
 
         Map<Long, HolidaySearchResponse> idAndHolidaySearchResponse = holidaySearchResponses.getContent().stream()
                 .collect(Collectors.toMap(HolidaySearchResponse::getId, Function.identity()));

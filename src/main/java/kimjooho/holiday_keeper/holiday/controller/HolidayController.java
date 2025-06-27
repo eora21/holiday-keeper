@@ -28,10 +28,12 @@ public class HolidayController {
 
     @GetMapping
     public ResponseEntity<Page<HolidaySearchResponse>> searchHolidays(
-            @Valid @ModelAttribute HolidaySearchRequest searchParamRequest,
-            Pageable pageable) {
+            @Valid @ModelAttribute HolidaySearchRequest request, Pageable pageable) {
 
-        Page<HolidaySearchResponse> searchResponse = holidayService.search(searchParamRequest, pageable);
+        Page<HolidaySearchResponse> searchResponse =
+                holidayService.search(request.getFrom(), request.getTo(), request.getCountryCode(),
+                        request.getCountyCode(), request.getType(), pageable);
+
         return ResponseEntity.ok(searchResponse);
     }
 
@@ -47,7 +49,7 @@ public class HolidayController {
 
     @PutMapping("{year}/{countryCode}")
     public ResponseEntity<Void> putHolidays(@PathVariable("year") int year,
-                                         @PathVariable("countryCode") String countryCode) {
+                                            @PathVariable("countryCode") String countryCode) {
 
         List<NagerHolidayResponse> holidaysResponse = restClient.getHolidays(year, countryCode);
 

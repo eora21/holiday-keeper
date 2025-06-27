@@ -11,7 +11,6 @@ import lombok.Getter;
 
 public class HolidaySearchRequest {
 
-    @Getter
     @Min(2020)
     private final Integer year;
 
